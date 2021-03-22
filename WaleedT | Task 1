@@ -1,0 +1,136 @@
+1) LVM:
+fdisk -l
+pvcreate /dev/sdb /dev/sdc
+vgcreate -s 16M vg1 /dev/sdb /dev/sdc
+lvcreate -l 50 -n lvm00
+mkfs.ext4 /dev/vg1/lvm00
+mkdir -p /mnt/data
+mount /dev/vg1/lvm00 /mnt/data
+edit /etc/fstab to mount on boot automatically
+
+
+2) Users, groups and permissions:
+  1.  useradd -u 601 user1
+      passwd user1
+        redhat
+        redhat
+      usermod -s /sbin/nologin user1
+  
+  2.  groupadd TrainingGroup
+      usermod –a –G TrainingGroup user1
+      
+  3.  useradd user2
+      useradd user3
+      passwd user2
+        redhat
+        redhat
+      passwd user3
+        redhat
+        redhat
+      usermod –a –G TrainingGroup user2
+      usermod –a –G admin user2
+      usermod –a –G TrainingGroup user3
+      usermod –a –G admin user3
+      
+      usermod -G root user3
+      usermod -g 0 -o user3
+      
+      OR:
+      visudo
+      user3 ALL=(ALL) ALL
+      
+3) SSH:
+  ssh-keygen -b 4096
+  cd /root/.ssh 
+  ----
+  other VM
+  create a user same name 
+  cd /home/user
+  mkdir .ssh
+  chmod 700 .ssh
+  cd .ssh
+  vim authorized_key
+  (Copy pub key from first user)
+  save it
+  chmod 600 authorized_key
+  then ( from first user ) ssh secondUser`s Server
+
+  vim /etc/ssh/sshd_config
+  PasswordAuthentication no
+
+4) Permissions:
+  mv /etc/fstab /var/tmp
+  cd /var/tmp
+  mv fstab admin
+  
+  chmod 760 admin
+  setfacl -m
+  user1:rw /var/tp/admin
+  user2:0 /var/tmp/admin
+  
+5) Permissions:
+  vim /etc/selinux/config
+  search for SELINUX =
+  change it to :
+  SELINUX = enforcing
+  save it (Should require a reboot)
+  
+6) Bash script and processes:
+  1. Create a .sh file (bat.sh)
+     (touch bat.sh)
+     vim bat.sh
+     write:
+      while:
+      do
+      echo "hi"
+      sleep 1
+      done
+  2. timeout 10m ./bat.sh &
+  3. execute it then ctrl + c
+
+7) Yum Repo:
+  yum install -y tmux
+  yum install -y httpd
+  yum install -y createrepo
+  yum install -y yum-utils
+  mkdir /var/www/html/repos/{base,extras,centosplus,updates}
+  reposync -g -l -d -m --repoid = zabbix--newest-only --download-metadata --download_path=/var/www/html/repos/
+  
+  MAKE SURE HTTPD SERVER IS WORKING:
+  service httpd status
+  if not running, run it and reboot.
+  
+  IN ORDER FOR CLIENT TO WORK:
+  vim /etc/yum.repos.d/remote.repo
+  [remote]
+  name=remoterepo
+  baseurl=http://192.168.47.134
+  enabled =1
+  gpgcheck =0
+  
+  yum clean all
+  yum repolist
+  yum install zabbix-*
+
+8) Network management:
+  firewall-cmd --add-port=80/tcp -permanent
+  firewall-cmd --add-port=443/tcp -permanent
+  firewall-cmd --direct --add-rule ipv4 filter INPUT 1 -m tcp --source 192.168.1.100 -p tcp -j REJECT
+  firewall-cmd --reload
+  
+9) Cronjob:
+  1. Create a log.sh file:
+    touch /tmp/log.sh
+  2. Inside log.sh write :
+    w | tail -n +3 | sed 's/|/ /' | awk '{print $4 " - " $1}' > log.txt
+  3. crontab -e:
+    30 1 * * * /tmp/log.sh
+    
+ 10) Mariadb:
+ (Did not do this part)
+    
+  
+  
+
+  
+
